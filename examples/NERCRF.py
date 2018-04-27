@@ -27,8 +27,8 @@ uid = uuid.uuid4().hex[:6]
 
 
 def evaluate(output_file):
-    score_file = "tmp/score_%s" % str(uid)
-    os.system("examples/eval/conll03eval.v2 < %s > %s" % (output_file, score_file))
+    score_file = "D:/tmp/score_%s" % str(uid)
+    os.system("perl C:/Github/NeuroNLP2/examples/eval/conll03eval.v2 < %s > %s" % (output_file, score_file))
     with open(score_file, 'r') as fin:
         fin.readline()
         line = fin.readline()
@@ -42,7 +42,7 @@ def evaluate(output_file):
 
 def main():
     parser = argparse.ArgumentParser(description='Tuning with bi-directional RNN-CNN-CRF')
-    parser.add_argument('--mode', choices=['RNN', 'LSTM', 'GRU'], help='architecture of rnn', required=True)
+    parser.add_argument('--mode', choices=['RNN', 'LSTM', 'GRU'], help='architecture of rnn')
     parser.add_argument('--num_epochs', type=int, default=100, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=16, help='Number of sentences in each batch')
     parser.add_argument('--hidden_size', type=int, default=128, help='Number of hidden units in RNN')
@@ -53,14 +53,14 @@ def main():
     parser.add_argument('--learning_rate', type=float, default=0.015, help='Learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.1, help='Decay rate of learning rate')
     parser.add_argument('--gamma', type=float, default=0.0, help='weight for regularization')
-    parser.add_argument('--dropout', choices=['std', 'variational'], help='type of dropout', required=True)
-    parser.add_argument('--p_rnn', nargs=2, type=float, required=True, help='dropout rate for RNN')
+    parser.add_argument('--dropout', choices=['std', 'variational'], help='type of dropout')
+    parser.add_argument('--p_rnn', nargs=2, type=float, help='dropout rate for RNN')
     parser.add_argument('--p_in', type=float, default=0.33, help='dropout rate for input embeddings')
     parser.add_argument('--p_out', type=float, default=0.33, help='dropout rate for output layer')
     parser.add_argument('--bigram', action='store_true', help='bi-gram parameter for CRF')
     parser.add_argument('--schedule', type=int, help='schedule for learning rate decay')
     parser.add_argument('--unk_replace', type=float, default=0., help='The rate to replace a singleton word with UNK')
-    parser.add_argument('--embedding', choices=['glove', 'senna', 'sskip', 'polyglot'], help='Embedding for words', required=True)
+    parser.add_argument('--embedding', choices=['glove', 'senna', 'sskip', 'polyglot'], help='Embedding for words')
     parser.add_argument('--embedding_dict', help='path for embedding dict')
     parser.add_argument('--train')  # "data/POS-penn/wsj/split1/wsj1.train.original"
     parser.add_argument('--dev')  # "data/POS-penn/wsj/split1/wsj1.dev.original"
@@ -83,7 +83,7 @@ def main():
     decay_rate = args.decay_rate
     gamma = args.gamma
     schedule = args.schedule
-    p_rnn = tuple(args.p_rnn)
+    #p_rnn = tuple(args.p_rnn)
     p_in = args.p_in
     p_out = args.p_out
     unk_replace = args.unk_replace
@@ -91,11 +91,45 @@ def main():
     embedding = args.embedding
     embedding_path = args.embedding_dict
 
+    char_dim = args.char_dim
+    window = 3
+    num_layers = args.num_layers
+    tag_space = args.tag_space
+
+    # Lista de argumentos do script Linux
+    mode = 'LSTM'
+    num_epochs = 200
+    batch_size = 16
+    hidden_size = 256
+    num_layers = 1
+    char_dim = 30
+    num_filters = 30
+    tag_space = 256
+    learning_rate = 0.01
+    decay_rate = 0.05
+    schedule = 5
+    gamma = 0.0
+    dropout = 'std'
+    p_in = 0.33
+    p_rnn = [0.33, 0.5]
+    p_out = 0.5
+    unk_replace = 0.0
+    bigram = True
+    embedding = 'word2vec'
+    embedding_dict = "D:/treino embeding/wang2vec_skip_s100/skip_s100.txt"
+    train_path = "D:/HAREM/train/train.txt"
+    dev_path = "D:/HAREM/dev/dev.txt"
+    test_path = "D:/HAREM/test/test.txt"
+
+    embedding_path = embedding_dict
+
+    logger.info("Loading embeddings")
+
     embedd_dict, embedd_dim = utils.load_embedding_dict(embedding, embedding_path)
 
     logger.info("Creating Alphabets")
     word_alphabet, char_alphabet, pos_alphabet, \
-    chunk_alphabet, ner_alphabet = conll03_data.create_alphabets("data/alphabets/ner_crf/", train_path, data_paths=[dev_path, test_path],
+    chunk_alphabet, ner_alphabet = conll03_data.create_alphabets("D:/data/alphabets/ner_crf/", train_path, data_paths=[dev_path, test_path],
                                                                  embedd_dict=embedd_dict, max_vocabulary_size=50000)
 
     logger.info("Word Alphabet Size: %d" % word_alphabet.size())
@@ -136,10 +170,6 @@ def main():
     word_table = construct_word_embedding_table()
     logger.info("constructing network...")
 
-    char_dim = args.char_dim
-    window = 3
-    num_layers = args.num_layers
-    tag_space = args.tag_space
     initializer = nn.init.xavier_uniform
     if args.dropout == 'std':
         network = BiRecurrentConvCRF(embedd_dim, word_alphabet.size(), char_dim, char_alphabet.size(), num_filters, window, mode, hidden_size, num_layers, num_labels,
@@ -175,7 +205,7 @@ def main():
         start_time = time.time()
         num_back = 0
         network.train()
-        for batch in range(1, num_batches + 1):
+        for batch in range(1, int(num_batches + 1)):
             word, char, _, _, labels, masks, lengths = conll03_data.get_batch_variable(data_train, batch_size, unk_replace=unk_replace)
 
             optim.zero_grad()
@@ -205,9 +235,22 @@ def main():
         sys.stdout.write("\b" * num_back)
         print('train: %d loss: %.4f, time: %.2fs' % (num_batches, train_err / train_total, time.time() - start_time))
 
-        # evaluate performance on dev data
+        # evaluate performance on TRAIN data
         network.eval()
-        tmp_filename = 'tmp/%s_dev%d' % (str(uid), epoch)
+        tmp_filename = 'D:/tmp/%s_train%d' % (str(uid), epoch)
+        writer.start(tmp_filename)
+
+        for batch in conll03_data.iterate_batch_variable(data_train, batch_size):
+            word, char, pos, chunk, labels, masks, lengths = batch
+            preds, _ = network.decode(word, char, target=labels, mask=masks, leading_symbolic=conll03_data.NUM_SYMBOLIC_TAGS)
+            writer.write(word.data.cpu().numpy(), pos.data.cpu().numpy(), chunk.data.cpu().numpy(), preds.cpu().numpy(), labels.data.cpu().numpy(), lengths.cpu().numpy())
+        writer.close()
+        train_acc, train_precision, train_recall, train_f1 = evaluate(tmp_filename)
+        print('train acc: %.2f%%, precision: %.2f%%, recall: %.2f%%, F1: %.2f%%' % (train_acc, train_precision, train_recall, train_f1))
+
+        # evaluate performance on dev data
+        #network.eval()
+        tmp_filename = 'D:/tmp/%s_dev%d' % (str(uid), epoch)
         writer.start(tmp_filename)
 
         for batch in conll03_data.iterate_batch_variable(data_dev, batch_size):
@@ -226,7 +269,7 @@ def main():
             best_epoch = epoch
 
             # evaluate on test data when better performance detected
-            tmp_filename = 'tmp/%s_test%d' % (str(uid), epoch)
+            tmp_filename = 'D:/tmp/%s_test%d' % (str(uid), epoch)
             writer.start(tmp_filename)
 
             for batch in conll03_data.iterate_batch_variable(data_test, batch_size):

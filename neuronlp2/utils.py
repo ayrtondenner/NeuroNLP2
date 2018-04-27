@@ -2,7 +2,7 @@ __author__ = 'max'
 
 import pickle
 import numpy as np
-from gensim.models.word2vec import Word2Vec
+from gensim.models import KeyedVectors
 import gzip
 
 from .io import utils
@@ -18,7 +18,7 @@ def load_embedding_dict(embedding, embedding_path, normalize_digits=True):
     print("loading embedding: %s from %s" % (embedding, embedding_path))
     if embedding == 'word2vec':
         # loading word2vec
-        word2vec = Word2Vec.load_word2vec_format(embedding_path, binary=True)
+        word2vec = KeyedVectors.load_word2vec_format(embedding_path, binary=False)
         embedd_dim = word2vec.vector_size
         return word2vec, embedd_dim
     elif embedding == 'glove':

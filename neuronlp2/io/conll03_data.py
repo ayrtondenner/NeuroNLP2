@@ -35,18 +35,21 @@ def create_alphabets(alphabet_directory, train_path, data_paths=None, max_vocabu
         vocab_set = set(vocab_list)
         for data_path in data_paths:
             # logger.info("Processing data: %s" % data_path)
-            with open(data_path, 'r') as file:
+            with open(data_path, 'rb') as file:
                 for line in file:
                     line = line.decode('utf-8')
                     line = line.strip()
                     if len(line) == 0:
                         continue
 
-                    tokens = line.split(' ')
-                    word = utils.DIGIT_RE.sub(b"0", tokens[1]) if normalize_digits else tokens[1]
-                    pos = tokens[2]
-                    chunk = tokens[3]
-                    ner = tokens[4]
+                    tokens = line.split('\t')
+                    token_to_byte = bytearray(tokens[0], 'utf-8')
+                    word = utils.DIGIT_RE.sub(b"0", token_to_byte) if normalize_digits else token_to_byte
+                    word = word.decode('utf-8')
+                    # Alteração nos tokens não-existentes
+                    pos = '_'
+                    chunk = '_'
+                    ner = tokens[1]
 
                     pos_alphabet.add(pos)
                     chunk_alphabet.add(chunk)
@@ -72,21 +75,24 @@ def create_alphabets(alphabet_directory, train_path, data_paths=None, max_vocabu
         ner_alphabet.add(PAD_NER)
 
         vocab = dict()
-        with open(train_path, 'r') as file:
+        with open(train_path, 'rb') as file:
             for line in file:
                 line = line.decode('utf-8')
                 line = line.strip()
                 if len(line) == 0:
                     continue
 
-                tokens = line.split(' ')
-                for char in tokens[1]:
+                tokens = line.split('\t')
+                for char in tokens[0]:
                     char_alphabet.add(char)
-
-                word = utils.DIGIT_RE.sub(b"0", tokens[1]) if normalize_digits else tokens[1]
-                pos = tokens[2]
-                chunk = tokens[3]
-                ner = tokens[4]
+                    
+                token_to_byte = bytearray(tokens[0], 'utf-8')
+                word = utils.DIGIT_RE.sub(b"0", token_to_byte) if normalize_digits else token_to_byte
+                word = word.decode('utf-8')
+                # Alteração nos tokens não-existentes
+                pos = '_'
+                chunk = '_'
+                ner = tokens[1]
 
                 pos_alphabet.add(pos)
                 chunk_alphabet.add(chunk)

@@ -8,29 +8,29 @@ from . import utils
 
 class CoNLLXReader(object):
     def __init__(self, file_path, word_alphabet, char_alphabet, pos_alphabet, type_alphabet):
-        self.__source_file = open(file_path, 'r')
+        self.reader_source_file = open(file_path, 'r', encoding='utf-8')
         self.__word_alphabet = word_alphabet
         self.__char_alphabet = char_alphabet
         self.__pos_alphabet = pos_alphabet
         self.__type_alphabet = type_alphabet
 
     def close(self):
-        self.__source_file.close()
+        self.reader_source_file.close()
 
     def getNext(self, normalize_digits=True, symbolic_root=False, symbolic_end=False):
-        line = self.__source_file.readline()
+        line = self.reader_source_file.readline()
         # skip multiple blank lines.
         while len(line) > 0 and len(line.strip()) == 0:
-            line = self.__source_file.readline()
+            line = self.reader_source_file.readline()
         if len(line) == 0:
             return None
 
         lines = []
         while len(line.strip()) > 0:
             line = line.strip()
-            line = line.decode('utf-8')
+            #line = line.decode('utf-8')
             lines.append(line.split('\t'))
-            line = self.__source_file.readline()
+            line = self.reader_source_file.readline()
 
         length = len(lines)
         if length == 0:
@@ -60,7 +60,7 @@ class CoNLLXReader(object):
         for tokens in lines:
             chars = []
             char_ids = []
-            for char in tokens[1]:
+            for char in tokens[0]:
                 chars.append(char)
                 char_ids.append(self.__char_alphabet.get_index(char))
             if len(chars) > utils.MAX_CHAR_LENGTH:
@@ -69,8 +69,8 @@ class CoNLLXReader(object):
             char_seqs.append(chars)
             char_id_seqs.append(char_ids)
 
-            word = utils.DIGIT_RE.sub(b"0", tokens[1]) if normalize_digits else tokens[1]
-            pos = tokens[4]
+            word = utils.DIGIT_RE.sub(b"0", tokens[0]) if normalize_digits else tokens[0]
+            pos = '_'
             head = int(tokens[6])
             type = tokens[7]
 
@@ -101,7 +101,7 @@ class CoNLLXReader(object):
 
 class CoNLL03Reader(object):
     def __init__(self, file_path, word_alphabet, char_alphabet, pos_alphabet, chunk_alphabet, ner_alphabet):
-        self.__source_file = open(file_path, 'r')
+        self.reader_source_file = open(file_path, 'r', encoding='utf-8')
         self.__word_alphabet = word_alphabet
         self.__char_alphabet = char_alphabet
         self.__pos_alphabet = pos_alphabet
@@ -109,22 +109,22 @@ class CoNLL03Reader(object):
         self.__ner_alphabet = ner_alphabet
 
     def close(self):
-        self.__source_file.close()
+        self.reader_source_file.close()
 
     def getNext(self, normalize_digits=True):
-        line = self.__source_file.readline()
+        line = self.reader_source_file.readline()
         # skip multiple blank lines.
         while len(line) > 0 and len(line.strip()) == 0:
-            line = self.__source_file.readline()
+            line = self.reader_source_file.readline()
         if len(line) == 0:
             return None
 
         lines = []
         while len(line.strip()) > 0:
             line = line.strip()
-            line = line.decode('utf-8')
-            lines.append(line.split(' '))
-            line = self.__source_file.readline()
+            #line = line.decode('utf-8')
+            lines.append(line.split('\t'))
+            line = self.reader_source_file.readline()
 
         length = len(lines)
         if length == 0:
@@ -144,7 +144,7 @@ class CoNLL03Reader(object):
         for tokens in lines:
             chars = []
             char_ids = []
-            for char in tokens[1]:
+            for char in tokens[0]:
                 chars.append(char)
                 char_ids.append(self.__char_alphabet.get_index(char))
             if len(chars) > utils.MAX_CHAR_LENGTH:
@@ -153,10 +153,12 @@ class CoNLL03Reader(object):
             char_seqs.append(chars)
             char_id_seqs.append(char_ids)
 
-            word = utils.DIGIT_RE.sub(b"0", tokens[1]) if normalize_digits else tokens[1]
-            pos = tokens[2]
-            chunk = tokens[3]
-            ner = tokens[4]
+            token_to_byte = bytearray(tokens[0], 'utf-8')
+            word = utils.DIGIT_RE.sub(b"0", token_to_byte) if normalize_digits else token_to_byte
+            word = word.decode('utf-8')
+            pos = '_'
+            chunk = '_'
+            ner = tokens[1]
 
             words.append(word)
             word_ids.append(self.__word_alphabet.get_index(word))
