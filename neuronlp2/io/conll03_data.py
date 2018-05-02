@@ -42,14 +42,14 @@ def create_alphabets(alphabet_directory, train_path, data_paths=None, max_vocabu
                     if len(line) == 0:
                         continue
 
-                    tokens = line.split('\t')
+                    tokens = line.split(' ')
                     token_to_byte = bytearray(tokens[0], 'utf-8')
                     word = utils.DIGIT_RE.sub(b"0", token_to_byte) if normalize_digits else token_to_byte
                     word = word.decode('utf-8')
                     # Alteração nos tokens não-existentes
-                    pos = '_'
-                    chunk = '_'
-                    ner = tokens[1]
+                    pos = tokens[1]
+                    chunk = tokens[2]
+                    ner = tokens[3]
 
                     pos_alphabet.add(pos)
                     chunk_alphabet.add(chunk)
@@ -82,7 +82,7 @@ def create_alphabets(alphabet_directory, train_path, data_paths=None, max_vocabu
                 if len(line) == 0:
                     continue
 
-                tokens = line.split('\t')
+                tokens = line.split(' ')
                 for char in tokens[0]:
                     char_alphabet.add(char)
                     
@@ -90,9 +90,9 @@ def create_alphabets(alphabet_directory, train_path, data_paths=None, max_vocabu
                 word = utils.DIGIT_RE.sub(b"0", token_to_byte) if normalize_digits else token_to_byte
                 word = word.decode('utf-8')
                 # Alteração nos tokens não-existentes
-                pos = '_'
-                chunk = '_'
-                ner = tokens[1]
+                pos = tokens[1]
+                chunk = tokens[2]
+                ner = tokens[3]
 
                 pos_alphabet.add(pos)
                 chunk_alphabet.add(chunk)

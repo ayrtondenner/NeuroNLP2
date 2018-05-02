@@ -29,7 +29,7 @@ class CoNLLXReader(object):
         while len(line.strip()) > 0:
             line = line.strip()
             #line = line.decode('utf-8')
-            lines.append(line.split('\t'))
+            lines.append(line.split(' '))
             line = self.reader_source_file.readline()
 
         length = len(lines)
@@ -70,7 +70,7 @@ class CoNLLXReader(object):
             char_id_seqs.append(char_ids)
 
             word = utils.DIGIT_RE.sub(b"0", tokens[0]) if normalize_digits else tokens[0]
-            pos = '_'
+            pos = tokens[1]
             head = int(tokens[6])
             type = tokens[7]
 
@@ -123,7 +123,7 @@ class CoNLL03Reader(object):
         while len(line.strip()) > 0:
             line = line.strip()
             #line = line.decode('utf-8')
-            lines.append(line.split('\t'))
+            lines.append(line.split(' '))
             line = self.reader_source_file.readline()
 
         length = len(lines)
@@ -156,9 +156,9 @@ class CoNLL03Reader(object):
             token_to_byte = bytearray(tokens[0], 'utf-8')
             word = utils.DIGIT_RE.sub(b"0", token_to_byte) if normalize_digits else token_to_byte
             word = word.decode('utf-8')
-            pos = '_'
-            chunk = '_'
-            ner = tokens[1]
+            pos = tokens[1]
+            chunk = tokens[2]
+            ner = tokens[3]
 
             words.append(word)
             word_ids.append(self.__word_alphabet.get_index(word))

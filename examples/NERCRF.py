@@ -41,8 +41,9 @@ def evaluate(output_file):
 
 
 def main():
+    '''
     parser = argparse.ArgumentParser(description='Tuning with bi-directional RNN-CNN-CRF')
-    parser.add_argument('--mode', choices=['RNN', 'LSTM', 'GRU'], help='architecture of rnn')
+    parser.add_argument('--mode', choices=['RNN', 'LSTM', 'GRU'], help='architecture of rnn', required=True)
     parser.add_argument('--num_epochs', type=int, default=100, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=16, help='Number of sentences in each batch')
     parser.add_argument('--hidden_size', type=int, default=128, help='Number of hidden units in RNN')
@@ -53,75 +54,49 @@ def main():
     parser.add_argument('--learning_rate', type=float, default=0.015, help='Learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.1, help='Decay rate of learning rate')
     parser.add_argument('--gamma', type=float, default=0.0, help='weight for regularization')
-    parser.add_argument('--dropout', choices=['std', 'variational'], help='type of dropout')
-    parser.add_argument('--p_rnn', nargs=2, type=float, help='dropout rate for RNN')
+    parser.add_argument('--dropout', choices=['std', 'variational'], help='type of dropout', required=True)
+    parser.add_argument('--p_rnn', nargs=2, type=float, required=True, help='dropout rate for RNN')
     parser.add_argument('--p_in', type=float, default=0.33, help='dropout rate for input embeddings')
     parser.add_argument('--p_out', type=float, default=0.33, help='dropout rate for output layer')
     parser.add_argument('--bigram', action='store_true', help='bi-gram parameter for CRF')
     parser.add_argument('--schedule', type=int, help='schedule for learning rate decay')
     parser.add_argument('--unk_replace', type=float, default=0., help='The rate to replace a singleton word with UNK')
-    parser.add_argument('--embedding', choices=['glove', 'senna', 'sskip', 'polyglot'], help='Embedding for words')
+    parser.add_argument('--embedding', choices=['glove', 'senna', 'sskip', 'polyglot'], help='Embedding for words', required=True)
     parser.add_argument('--embedding_dict', help='path for embedding dict')
     parser.add_argument('--train')  # "data/POS-penn/wsj/split1/wsj1.train.original"
     parser.add_argument('--dev')  # "data/POS-penn/wsj/split1/wsj1.dev.original"
     parser.add_argument('--test')  # "data/POS-penn/wsj/split1/wsj1.test.original"
 
     args = parser.parse_args()
-
+    '''
     logger = get_logger("NERCRF")
 
-    mode = args.mode
-    train_path = args.train
-    dev_path = args.dev
-    test_path = args.test
-    num_epochs = args.num_epochs
-    batch_size = args.batch_size
-    hidden_size = args.hidden_size
-    num_filters = args.num_filters
-    learning_rate = args.learning_rate
-    momentum = 0.9
-    decay_rate = args.decay_rate
-    gamma = args.gamma
-    schedule = args.schedule
-    #p_rnn = tuple(args.p_rnn)
-    p_in = args.p_in
-    p_out = args.p_out
-    unk_replace = args.unk_replace
-    bigram = args.bigram
-    embedding = args.embedding
-    embedding_path = args.embedding_dict
-
-    char_dim = args.char_dim
-    window = 3
-    num_layers = args.num_layers
-    tag_space = args.tag_space
-
-    # Lista de argumentos do script Linux
-    mode = 'LSTM'
+    mode = 'LSTM' #['RNN', 'LSTM', 'GRU']
     num_epochs = 200
     batch_size = 16
     hidden_size = 256
+    tag_space = 128
     num_layers = 1
-    char_dim = 30
     num_filters = 30
-    tag_space = 256
+    char_dim = 30
     learning_rate = 0.01
     decay_rate = 0.05
-    schedule = 5
     gamma = 0.0
-    dropout = 'std'
-    p_in = 0.33
+    dropout = 'std' #['std', 'variational']
     p_rnn = [0.33, 0.5]
+    p_in = 0.33
     p_out = 0.5
-    unk_replace = 0.0
     bigram = True
-    embedding = 'word2vec'
-    embedding_dict = "D:/treino embeding/wang2vec_skip_s100/skip_s100.txt"
-    train_path = "D:/HAREM/train/train.txt"
-    dev_path = "D:/HAREM/dev/dev.txt"
-    test_path = "D:/HAREM/test/test.txt"
+    schedule = 1
+    unk_replace = 0.0
+    embedding = 'word2vec' #['glove', 'senna', 'sskip', 'polyglot']
+    embedding_path = 'D:/glove.6B/glove.6B.100d.txt'
+    train_path = 'D:/CoNLL-2003/train/eng.train'
+    dev_path = 'D:/CoNLL-2003/dev/eng.testa'
+    test_path = 'D:/CoNLL-2003/test/eng.testb'
 
-    embedding_path = embedding_dict
+    window = 3
+    momentum = 0.9
 
     logger.info("Loading embeddings")
 
@@ -171,7 +146,7 @@ def main():
     logger.info("constructing network...")
 
     initializer = nn.init.xavier_uniform
-    if args.dropout == 'std':
+    if dropout == 'std':
         network = BiRecurrentConvCRF(embedd_dim, word_alphabet.size(), char_dim, char_alphabet.size(), num_filters, window, mode, hidden_size, num_layers, num_labels,
                                      tag_space=tag_space, embedd_word=word_table, p_in=p_in, p_out=p_out, p_rnn=p_rnn, bigram=bigram, initializer=initializer)
     else:
@@ -198,7 +173,7 @@ def main():
     test_recall = 0.0
     best_epoch = 0
     for epoch in range(1, num_epochs + 1):
-        print('Epoch %d (%s(%s), learning rate=%.4f, decay rate=%.4f (schedule=%d)): ' % (epoch, mode, args.dropout, lr, decay_rate, schedule))
+        print('Epoch %d (%s(%s), learning rate=%.4f, decay rate=%.4f (schedule=%d)): ' % (epoch, mode, dropout, lr, decay_rate, schedule))
         train_err = 0.
         train_total = 0.
 
